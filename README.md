@@ -1,4 +1,4 @@
 gomonitor
-=========
+========
 
-a web server written by golang
+a web monitor program written by golang.
