@@ -1,0 +1,26 @@
+<!doctype html>
+<html ng-app>
+<head>
+	<title>go Montitor</title>
+	<link rel="stylesheet" href="css/mon.css">
+</head>
+<body>
+	<div class="header"><h2>Welcome to Go-Monitor!</h2></div>
+	<div class="description">The Go-Monitor is a smart web app that can display information you wanna know about your application in real time,which may be dispersed in different servers.</div>
+	<table class="t1" ng-controller="t1Ctrl">
+		<th>Server <button ng-click="addServer()">add</button></th>
+		<th>Application <button ng-click="addServer()">add</button></th>
+		<tr>
+			<td><input type="text"></td>
+			<td><input type="text"></td>
+		</tr>
+		<tr>
+			<td><button ng-onclick="startMonitor()">Start Monitor</button></td>
+		</tr>
+	</tbale>
+	<script src="js/angular.js"></script>
+	<script>
+		
+	</script>
+</body>
+</html>

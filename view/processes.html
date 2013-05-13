@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html ng-app>
+<head>
+	<title>monitor</title>
+</head>
+<body>
+	<script type="text/javascript">
+	
+	function ProInfoCtrl($scope) {
+		var sock = null;
+	var wsuri = "ws://127.0.0.1:9091/processInfo";
+	window.onload = function () {
+			console.log("onload");
+			sock = new WebSocket(wsuri);
+
+			sock.onopen = function() {
+			console.log("connented to " + wsuri);
+			};
+
+			sock.onclose =function(e) {
+			console.log("connection closed (" + e.code + ")");
+			};
+
+			sock.onmessage = function(e) {
+			console.log("message received: " + e.data);
+			createTable(JSON.parse(e.data));
+			};
+		};
+		$scope.columns = [];
+		
+		
+
+		$scope.send = function(cmd) {
+			console.log("send")
+			sock.send(cmd);
+		};
+
+		function createTable(proObj) {
+			$scope.columns =[
+			{"name":proObj.ColPname},
+			{"name":proObj.ColPid},
+			{"name":proObj.Cpu},
+			{"name":proObj.ColMem}
+			];
+
+		}
+		//var t = document.createElement('talbe');
+		//for (var i=0; i<)
+	};
+	</script>
+	<center>
+	This is the main monitor page.
+	<button ng-click="send('start');">Start Monitor</button>
+		<table id="pros" ng-cotroller="ProInfoCtrl">
+			<tr ng-repeat="column in columns">
+				<th>{{column.name}}</th>
+			</tr>
+<!--  			<tr>
+				<th>{{printf "%-10s" .ColPname}}</th>
+				<th>{{printf "%-10s" .ColPid}}</th>
+				<th>{{printf "%-10s" .ColCpu}}</th>
+				<th>{{printf "%-10s" .ColMem}}</th>
+				<th>operator</th>
+				<th></th>
+			</tr>
+ 			{{with .Pros}}
+			{{range .}}
+			<tr>
+				<td>{{printf "%-10s".Name}}</td>
+				<td>{{printf "%-10d".Pid}}</td>
+				<td>{{printf "%-10g".Cpu}}</td>
+				<td>{{printf "%-10g".Mem}}</td>
+				<td><button type="button">close</button></td>
+			</tr>
+			{{end}}
+			{{end}}  --> 
+
+		</table>
+	</center>
+</body>
+
+</html>

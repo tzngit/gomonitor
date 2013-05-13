@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>monitor</title>
+	<style type="text/css">
+	td {
+		text-align: left;
+		height: 10px;
+		font-size: 16px;
+		border: 1px solid #CCD5E8;
+	}
+	.header{
+		text-align: center;
+	}
+
+	.description {
+		margin-left: 20%;
+		width: 60%;
+		text-align: left;
+	}
+
+	.whole {
+		text-align: center;
+		margin: auto;
+	}
+	.cen {
+		padding-left: 20%;
+		width: 60%;
+		text-align: left;
+	}
+	#tbPros {
+		margin: auto;
+		text-align: center;
+		width: 60%;
+	}
+	.col1 {
+		width: 258px;
+	}
+	.str {
+		margin-top: 4px;
+		height: .col1.height;
+		float: left;
+	}
+	.btn {
+		float: right;
+		text-align: right;
+		font-size:12pt;
+		color:#003399;
+		cursor: pointer;
+		margin-right: 0px;
+	}
+
+	.delBtn {
+		cursor: pointer;
+		color: red;
+	}
+	.clean {clear: both;}
+
+	.bn{
+		cursor: pointer;
+	}
+	</style>
+</head>
+<body>
+	<div class="header"><h1>Welcome to Go-Monitor!</h1></div>
+	<div class="description"><h3>The Go-Monitor is a smart web app that can display information you wanna know about your application in real time,which may be dispersed in different servers.</h3></div>
+	<div class="cen">
+		<button class="bn" onclick="startMonitor();">Start Monitor</button>
+		<button class="bn" onclick="endMonitor();">End Monitor</button>
+	</div>
+	<br>
+	<table id="tbPros" border="1">
+		<tr id="row1">
+			<td class="col1">
+				<div class="str"><strong>Server IP</strong></div>
+				<button class="btn" onclick="addServerRow();">+</button>
+			</td>
+			<td><strong>Process Name</strong></td>
+			<td><strong>Pid</strong></td>
+			<td><strong>%cpu</strong></td>
+			<td><strong>%mem</strong></td>
+			<td><strong>Operation</strong></td>
+		</tr>
+	</table>
+	<script type="text/javascript">
+	var sock = null;
+	var wsuri = "ws://127.0.0.1:9091/processInfo";
+	var tbPros = document.getElementById('tbPros');
+	var timer;
+	var disConnect = {
+
+	}
+	window.onload = function () {
+		sock = new WebSocket(wsuri)
+		sock.onopen = function() {
+			console.log("connented to " + wsuri);
+		};
+
+		sock.onclose =function(e) {
+			console.log("connection closed (" + e.code + ")");
+		};
+
+		sock.onmessage = function(e) {
+		//console.log("message received: " + e.data);
+		//var j = JSON.parse(JSON.parse(e.data))
+			var jsonObj = JSON.parse(JSON.parse(e.data), function(k,v) {
+			return v
+			})
+			updateProInfo(jsonObj);
+		};
+	};
+
+	function send(obj) {
+		jsonObj = JSON.stringify(obj);
+		console.log(jsonObj);
+		sock.send(jsonObj);
+	}
+
+	function IsValid() {
+		return IsValidIp(this);
+	}
+
+	function IsValidIp(serverInput){
+		var s = serverInput.value; 
+      	var arr=s.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);  
+      	if(arr==null) {
+      		serverInput.setAttribute("style","background-color:red");
+      		return false;
+      	} 
+      	for(i=1;i<arr.length;i++)
+      		if(String(Number(arr[i]))!=arr[i]||Number(arr[i])>255) {
+      			serverInput.setAttribute("style","background-color:red");
+      			return false;
+      		}
+      	serverInput.setAttribute("style", "");
+      	return true;  
+ 	}  
+
+ 	function makeProtocol(Operation) {
+ 		var protocolObj = {
+ 			"Operation" : Operation,
+ 			Servers : [],
+ 			addServer : function() {
+ 				var len = 0;
+ 				for (var i = 0; i < arguments.length; i++) {
+ 					len = protocolObj.Servers.length;
+ 					protocolObj.Servers[len] = {};
+ 					protocolObj.Servers[len].Ip = arguments[i];
+ 				};
+ 			}
+ 		}
+ 		return protocolObj;
+ 	}
+
+ 	function getAllServers(obj) {
+ 		var rowLen = tbPros.rows.length;
+		for (var i = 1; i < rowLen; i++) {
+			var server = document.getElementById("server" + i);
+			if (IsValidIp(server) == false) {
+				window.alert("invalid ip address!");
+				return null;
+			}
+			obj.addServer(server.value);
+		}
+		delete obj.addServer;
+ 	}
+
+	function startMonitor() {
+		var data = makeProtocol("start monitor");
+		getAllServers(data);
+		if (data.Servers.length == 0) {
+			window.alert("You have no server to monitor!")
+			return
+		}
+		send(data);
+	}
+
+	function endMonitor() {
+		var data = makeProtocol("end monitor");
+		getAllServers(data);
+		send(data);
+	}
+
+	function addServerRow() {
+		var rowLen = tbPros.rows.length;
+		var tr = tbPros.insertRow(rowLen);
+		var colLen = tbPros.rows[0].cells.length;
+		for (var i = 0; i < colLen; i++) {
+			var td = tr.insertCell(i);
+			if ( i == 0 ) {
+				var server = document.createElement("input");
+				server.type= "text";
+				server.size="8"
+				server.defaultValue = "127.0.0.1";
+				server.id = "server" + rowLen;
+				server.class = "ip";
+				server.focus();
+				server.addEventListener("keyup", IsValid, false);
+				td.appendChild(server);
+
+				var deleteBtn = document.createElement("button");
+				deleteBtn.innerHTML="Delete";
+				deleteBtn.setAttribute("class", "btn delBtn");
+				deleteBtn.addEventListener("click", deleteRow, false);
+				td.appendChild(deleteBtn)
+			} else td.innerHTML = "&nbsp;";
+		};
+		
+	}
+
+	function deleteRow() {
+		tbPros.deleteRow(this.parentNode.parentNode.rowIndex)
+		endMonitor();
+	}
+
+	function stopFun() {
+		var tr = this.parentNode.parentNode;
+		var proId = tr.cells[1].innerHTML;
+		send("stop " + proId);
+		console.log("stop " + proId);
+	}
+
+	function restartFun() {
+
+	}
+	
+
+
+	function updateProInfo(proObj) {
+		//console.log(proObj)
+		var rowLen = tbPros.rows.length;	
+		for (var i=1; i<rowLen; i++) {
+			var row = tbPros.rows[i]
+			var tdIndex = 0;
+			var rowIp = row.cells[tdIndex++].firstChild.value;
+			for (var proIndex=0; proIndex<proObj.length; proIndex++) {
+				var server = proObj[proIndex]
+				if (server.ServerIp == rowIp) {
+					var colLen = row.cells.length;
+					for (var index=0; index<server.ProInfo.length; index++) {
+						processes = server.ProInfo[index]
+						for (var pro in processes) {
+							var process = processes[pro];
+							for (var attr in process) {
+								if (process[attr] == 0 || process[attr] == "") {
+									// if (timer == undefined)
+									// timer = setTimeout("nodata()", 500)
+									continue
+								}
+								var td = row.cells[tdIndex++];
+						 		td.innerHTML = process[attr];
+						 		row.cells[0].firstChild.setAttribute("readonly","readonly");
+						 		//console.log(td.innerHTML)
+							}
+						 }
+					}
+				}
+			}
+			// row.deleteCell(tdIndex)
+			// var tdOperation = row.insertCell(tdIndex++);
+			// var stop = document.createElement("input");
+			// stop.type= "button";
+			// stop.value ="stop";
+			// stop.addEventListener('click', stopFun,false);
+			// tdOperation.appendChild(stop);
+		}
+		// for (var processName in proObj.Pros) {
+		// 	var process = proObj.Pros[processName];
+		// 	var trPro = tbPros.insertRow(rowLen++);
+		// 	trPro.id = processName;
+		// 	var i = 0;
+		// 	for (var attr in process) {
+		// 		var td = trPro.insertCell(i++);
+		// 		td.innerHTML = process[attr];
+		// 	}
+		// 	var tdStop = trPro.insertCell(i++);
+		// 	var stop = document.createElement("input");
+		// 	stop.type= "button";
+		// 	stop.value ="stop";
+		// 	stop.addEventListener('click', stopFun,false);
+		// 	tdStop.appendChild(stop);
+
+		// 	var tdRestart = trPro.insertCell(i++);
+		// 	var restart = document.createElement("input");
+		// 	restart.type= "button";
+		// 	restart.value ="restart";
+		// 	restart.addEventListener('click', restartFun,false);
+		// 	tdRestart.appendChild(restart);
+		// }
+	}
+	</script>
+</body>
+</html>

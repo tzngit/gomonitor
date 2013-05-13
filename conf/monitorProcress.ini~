@@ -1,0 +1,7 @@
+## 2013.4.11
+## this file lists all the processes you want to monitor
+[127.0.0.1:1234]
+process1=./t13
+
+[127.0.0.1:1234]
+process2=./t14
